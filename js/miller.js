@@ -277,9 +277,10 @@ function guid() {
                 //modified
                 let searchInputContent =
                     `<div class="miller-col-filter">
-                        <input type="text" onchange="filterItems(this.value,'${category.categoryId}')"/>
+                        <input class="filterItems" type="search" />
                     </div>`;
                 millerColTitle.append(searchInputContent);
+
                 //end 
                 newMillerCol.append(millerColTitle);
 
@@ -298,6 +299,14 @@ function guid() {
                 newMillerCol.insertBefore(getLoadingCol.call(this));
 
             }
+
+            $('.filterItems').val('').trigger('change');
+            $('.filterItems').change(function () {
+                let query = $(this).val()
+                filterMillerColItems.call(this, query);
+                //let catId = $(this).attr('data-catId');
+                //filterItems(query, catId);
+            })
 
             return this;
 
@@ -417,6 +426,19 @@ function guid() {
             return isInitialized.call(this);
         }
 
+        function filterMillerColItems(query) {
+            let millerColBody = $(this).parent().parent().siblings(".miller-col-body");
+            let items = millerColBody.find('.miller-col-list-item');
+            for (let item of items) {
+                $(item).attr('style', 'display:none')
+                console.log($(item));
+                let found = $(item).attr('data-item-name').includes(query);
+                if (found) {
+                    $(item).attr('style', 'display:table')
+                }
+            }
+
+        }
 
         function buildColListItem(item, readOnly) {
 
@@ -499,6 +521,8 @@ function guid() {
             initialize.call(this);
 
         }
+
+
 
         function hideNavCols() {
 

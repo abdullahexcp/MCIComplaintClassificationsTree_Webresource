@@ -71,13 +71,12 @@ const CATEGORIES = new Map();
 let rootMillerColumnCategory;
 let $millerCol;
 function onLoad() {
-
     CATEGORIES.set('1', 'فئة الشكوي');
     CATEGORIES.set('2', 'Main Classification');
     CATEGORIES.set('3', 'Sub Classification');
-   
+
     const complaintCategories = getComplaintCategoriesNodes();
-   
+
     var parentCatNode = new BaseCategoryNode(null, null, complaintCategories);
     rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCatNode, '1');
     //set child category to millerColumn
@@ -88,19 +87,15 @@ function onLoad() {
         initData: rootMillerColumnCategory
     });
 
+    // $('.filterItems').on('change', function () {
+    //     let query = $(this).val()
+    //     let catId = $(this).attr('data-catId');
+    //     //filterItems(query, catId);
+    //     filterItems2.call(this, query);
+    // })
 
     console.log(parentCatNode);
     console.log(rootMillerColumnCategory);
-}
-
-function populateCategoryNodesChildNodesWithOtherCategoryNodes(categoryParentNodes, childCatgoryNodes) {
-    if (categoryParentNodes?.length && childCatgoryNodes?.length)
-        categoryParentNodes.forEach(parent => {
-            if (parent?.nodes)
-                parent.nodes.forEach(x => {
-                    x.populateNodes(childCatgoryNodes.find(y => y.Id === x.Id))
-                });
-        });
 }
 
 function MapClassificationsToParentMillerColumnCategory(parentCatNode, categoryId) {
@@ -138,17 +133,13 @@ function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentI
 }
 
 
-function filterItems(query, categoryId) {
-    getAllSelectedItems();
-    let foundCategory = getNestedCategoryById(rootMillerColumnCategory, categoryId);
-    if (foundCategory)
-        foundCategory.query = query;
+// function filterItems(query, categoryId) {
+//     let foundCategory = getNestedCategoryById(rootMillerColumnCategory, categoryId);
+//     if (foundCategory)
+//         foundCategory.query = query;
+// }
 
-}
 
-function getAllSelectedItems() {
-
-}
 
 function getNestedCategoryById(rootCategory, queryCategoryId) {
     if (rootCategory.categoryId === queryCategoryId)
