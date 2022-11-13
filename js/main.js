@@ -5,6 +5,21 @@ class MillerColumnCategory {
         this.parentId = parentId;
         this.isLowestLevel = isLowestLevel;
         this.items = items;
+        this.query = null;
+    }
+
+    filterItems() {
+        if (this.query)
+            return this._items.filter(x => x.itemName.includes(this.query))
+        return this._items;
+    }
+
+    set items(items) {
+        this._items = items;
+    }
+
+    get items() {
+        return this.filterItems();
     }
 }
 
@@ -54,13 +69,14 @@ class BaseCategoryNode {
     }
 }
 
-window.onload = onLoad;
+$(document).ready(onLoad);
 
 const CATEGORIES = new Map();
-
+let rootMillerColumnCategory;
+let $millerCol;
 function onLoad() {
 
-    CATEGORIES.set('1', 'Complaint category');
+    CATEGORIES.set('1', 'فئة الشكوي');
     CATEGORIES.set('2', 'Main Classification');
     CATEGORIES.set('3', 'Sub Classification');
     const serviceMainNestedSubClassifications = getServiceMainNestedSubClassifications();
@@ -69,19 +85,22 @@ function onLoad() {
     populateCategoryNodesChildNodesWithOtherCategoryNodes(complaintCategories, serviceMainNestedSubClassifications);
     //PREPARE CATNODE FOR MILLER COLS TO MAP AND SELECT CLASSIFICATIONS TREE AS MILLER COLUMN
     var parentCatNode = new BaseCategoryNode(null, null, complaintCategories);
-    let rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCatNode, '1');
+    rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCatNode, '1');
     //set child category to millerColumn
-    let $millerCol = $("#category-miller-cols-container");
+    $millerCol = $("#category-miller-cols-container");
+
     $millerCol.millerColumn({
         isReadOnly: true,
         initData: rootMillerColumnCategory
     });
+
+
     console.log(parentCatNode);
     console.log(rootMillerColumnCategory);
 }
 
-function populateCategoryNodeChildNodesWithOtherCategoryNodes(categoryParentNodes, childCatgoryNodes) {
-    if (categoryParentNodes?.nodes.length && childCatgoryNodes?.nodes.length)
+function populateCategoryNodesChildNodesWithOtherCategoryNodes(categoryParentNodes, childCatgoryNodes) {
+    if (categoryParentNodes?.length && childCatgoryNodes?.length)
         categoryParentNodes.forEach(parent => {
             if (parent?.nodes)
                 parent.nodes.forEach(x => {
@@ -124,32 +143,54 @@ function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentI
 }
 
 
+function filterItems(query, categoryId) {
+    getAllSelectedItems();
+    let foundCategory = getNestedCategoryById(rootMillerColumnCategory, categoryId);
+    if (foundCategory)
+        foundCategory.query = query;
+    
+}
 
+function getAllSelectedItems(){
+    
+}
 
-
-
-
+function getNestedCategoryById(rootCategory, queryCategoryId) {
+    if (rootCategory.categoryId === queryCategoryId)
+        return rootCategory;
+    else if (rootCategory?.items.length && queryCategoryId) {
+        let result;
+        for (let item of rootCategory.items) {
+            if (!item.childCategory)
+                continue;
+            result = getNestedCategoryById(item.childCategory, queryCategoryId);
+            if (result)
+                return result;
+        }
+    }
+    return null;
+}
 
 function getComplaintCategoriesNodes() {
     return complaintCategories = [
         new BaseCategoryNode(
-            "1", "	Offices	", [
-            new BaseCategoryNode("16", "	المظهر العام	", []),
-            new BaseCategoryNode("17", "	النظافة	", []),
-            new BaseCategoryNode("18", "	سهولة الوصول للفرع	", []),
-            new BaseCategoryNode("19", "	ساعات العمل	", []),
-            new BaseCategoryNode("20", "	الأمن و السلامة العامة	", [])
+            "1", "	شكاوي علي المكاتب وفروع الوزاره	", [
+            // new BaseCategoryNode("16", "	المظهر العام	", []),
+            // new BaseCategoryNode("17", "	النظافة	", []),
+            // new BaseCategoryNode("18", "	سهولة الوصول للفرع	", []),
+            // new BaseCategoryNode("19", "	ساعات العمل	", []),
+            // new BaseCategoryNode("20", "	الأمن و السلامة العامة	", [])
         ]
         ),
         new BaseCategoryNode(
-            "2", "	Behavior	", [
+            "2", "	شكاوي علي الأداء والسلوك للموظفين	", [
             new BaseCategoryNode("21", "	تقصير في الأداء	", []),
             new BaseCategoryNode("22", "	سوء التعامل	", []),
             new BaseCategoryNode("23", "	فساد	", [])
         ]
         ),
         new BaseCategoryNode(
-            "3", "	Sevices	", [
+            "3", "	شكاوي متعلقة بجميع الخدمات التي تقدمها الوزارة	", [
             new BaseCategoryNode("1", "	السجل التجاري	", []),
             new BaseCategoryNode("2", "	الاسماء التجارية	", []),
             new BaseCategoryNode("4", "	خدمات المهن الاستشارية	", []),

@@ -120,12 +120,12 @@ function CategoryItem() {
         return _this.hasChildren
     };
 
-    _this.setNumChildren = function(numChildren) {
+    _this.setNumChildren = function (numChildren) {
         _this.numChildren = numChildren;
         _this.setHasChildren(numChildren != 0);
     }
 
-    _this.getNumChildren = function(){
+    _this.getNumChildren = function () {
         return _this.numChildren;
     };
 
@@ -216,7 +216,7 @@ function guid() {
                     var lastVisibleCol = getLastVisibleCol.call(this);
                     var lastVisibleNonColLoadingContainer = lastVisibleCol.is(".col-loading") ? lastVisibleCol.prev() : lastVisibleCol;
 
-                    if(lastVisibleNonColLoadingContainer.length !== 0 && category.categoryId === lastVisibleNonColLoadingContainer.data("category-id")){
+                    if (lastVisibleNonColLoadingContainer.length !== 0 && category.categoryId === lastVisibleNonColLoadingContainer.data("category-id")) {
 
                         console.warn("Category is already added, ignoring addCol call ...");
                         hideLoadingCol.call(this);
@@ -274,7 +274,13 @@ function guid() {
 
                 millerColTitle.addClass("miller-col-title");
                 millerColTitle.append(millerColTitleText);
-
+                //modified
+                let searchInputContent =
+                    `<div class="miller-col-filter">
+                        <input type="text" onchange="filterItems(this.value,'${category.categoryId}')"/>
+                    </div>`;
+                millerColTitle.append(searchInputContent);
+                //end 
                 newMillerCol.append(millerColTitle);
 
                 var millerColBody = $("<div/>").addClass("miller-col-body");
@@ -340,7 +346,7 @@ function guid() {
 
             return this;
 
-        }else if ("updateItem" == args[0]) {
+        } else if ("updateItem" == args[0]) {
 
             var updatedtemData = args[1];
 
@@ -380,7 +386,7 @@ function guid() {
 
             return this;
 
-        }else if ("destroy" == args[0]) {
+        } else if ("destroy" == args[0]) {
 
             if (isInitialized.call(this)) {
                 // remove all miller-column object events
@@ -442,7 +448,7 @@ function guid() {
                 millerColListItem.append(listItemActions);
             }
 
-            if(item.numChildren != null && item.numChildren != 0){
+            if (item.numChildren != null && item.numChildren != 0) {
 
                 millerColListItem.append($("<span/>").addClass("num-children-badge").text(item.numChildren));
 
@@ -950,17 +956,17 @@ function guid() {
 
                 //check if item data is already provided during init
 
-                 var children = currentColContainer.data("children");
+                var children = currentColContainer.data("children");
 
-                 console.log("children:" + children)
+                console.log("children:" + children)
 
-                 if(children){
+                if (children) {
 
-                    for(var i = 0; i < children.length; ++i){
+                    for (var i = 0; i < children.length; ++i) {
 
-                        if(data.itemId === children[i].itemId){
+                        if (data.itemId === children[i].itemId) {
 
-                            if(children[i].childCategory){
+                            if (children[i].childCategory) {
 
                                 $(millerColumn).millerColumn("addCol", children[i].childCategory);
 
@@ -971,7 +977,7 @@ function guid() {
 
                     }
 
-                 }
+                }
 
                 if (isDebugEnabled) {
                     console.log("fired item-selected event: " + JSON.stringify(data))
@@ -1040,9 +1046,9 @@ function guid() {
                 //Firing edit-column-title event.
                 var data = getCategory.call(currentColContainer);
 
-                if (parentColContainer){
-                  data.parentId = $(parentColContainer).find(getColListItemSelector()).filter(SELECTOR_IS_SELECTED).data("item-id");
-                  data.prevColumnId = $(parentColContainer).find(getColListItemSelector()).filter(SELECTOR_IS_SELECTED).data("category-id");
+                if (parentColContainer) {
+                    data.parentId = $(parentColContainer).find(getColListItemSelector()).filter(SELECTOR_IS_SELECTED).data("item-id");
+                    data.prevColumnId = $(parentColContainer).find(getColListItemSelector()).filter(SELECTOR_IS_SELECTED).data("category-id");
                 }
 
                 $(currentColContainer).trigger("edit-column-title", data);
