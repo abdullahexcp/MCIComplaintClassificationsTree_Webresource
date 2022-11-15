@@ -1,7 +1,7 @@
 /**
  * v1.4.0.0
  */
-
+import classificationsTree from './complaintClassificationJson.json' assert {type: 'json'};
 function Category() {
 
     var _this = this;
@@ -274,14 +274,6 @@ function guid() {
 
                 millerColTitle.addClass("miller-col-title");
                 millerColTitle.append(millerColTitleText);
-                //modified
-                let searchInputContent =
-                    `<div class="miller-col-filter">
-                        <input class="filterItems" type="search" />
-                    </div>`;
-                millerColTitle.append(searchInputContent);
-
-                //end 
                 newMillerCol.append(millerColTitle);
 
                 var millerColBody = $("<div/>").addClass("miller-col-body");
@@ -300,14 +292,7 @@ function guid() {
 
             }
 
-            $('.filterItems').val('').trigger('change');
-            $('.filterItems').change(function () {
-                let query = $(this).val()
-                filterMillerColItems.call(this, query);
-                //let catId = $(this).attr('data-catId');
-                //filterItems(query, catId);
-            })
-
+            
             return this;
 
         } else if ("addItem" == args[0]) {
@@ -426,19 +411,19 @@ function guid() {
             return isInitialized.call(this);
         }
 
-        function filterMillerColItems(query) {
-            let millerColBody = $(this).parent().parent().siblings(".miller-col-body");
-            let items = millerColBody.find('.miller-col-list-item');
-            for (let item of items) {
-                $(item).attr('style', 'display:none')
-                console.log($(item));
-                let found = $(item).attr('data-item-name').includes(query);
-                if (found) {
-                    $(item).attr('style', 'display:table')
-                }
-            }
+        // function filterMillerColItems(query) {
+        //     let millerColBody = $(this).parent().parent().siblings(".miller-col-body");
+        //     let items = millerColBody.find('.miller-col-list-item');
+        //     for (let item of items) {
+        //         $(item).attr('style', 'display:none')
+        //         console.log($(item));
+        //         let found = $(item).attr('data-item-name').includes(query);
+        //         if (found) {
+        //             $(item).attr('style', 'display:table')
+        //         }
+        //     }
 
-        }
+        // }
 
         function buildColListItem(item, readOnly) {
 

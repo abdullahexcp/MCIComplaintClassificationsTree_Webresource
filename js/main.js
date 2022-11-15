@@ -1,4 +1,5 @@
 import classificationsTree from './complaintClassificationJson.json' assert {type: 'json'};
+var classificationsTreeCopy = [...classificationsTree];
 class MillerColumnCategory {
     constructor(categoryId = null, categoryName = null, parentId = null, isLowestLevel = true, items = []) {
         this.categoryId = categoryId;
@@ -70,32 +71,22 @@ $(document).ready(onLoad);
 const CATEGORIES = new Map();
 let rootMillerColumnCategory;
 let $millerCol;
+
 function onLoad() {
+
     CATEGORIES.set('1', 'فئة الشكوي');
     CATEGORIES.set('2', 'Main Classification');
     CATEGORIES.set('3', 'Sub Classification');
 
-    const complaintCategories = getComplaintCategoriesNodes();
+    prepareDataForMillerCols(classificationsTree);
 
-    var parentCatNode = new BaseCategoryNode(null, null, complaintCategories);
-    rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCatNode, '1');
-    //set child category to millerColumn
-    $millerCol = $("#category-miller-cols-container");
-
-    $millerCol.millerColumn({
-        isReadOnly: true,
-        initData: rootMillerColumnCategory
+    $('.filterItems').val('').trigger('change');
+    $('.filterItems').change(function () {
+        let query = $(this).val()
+        FilterOnSearch.call(this, query);
+        //let catId = $(this).attr('data-catId');
+        //filterItems(query, catId);
     });
-
-    // $('.filterItems').on('change', function () {
-    //     let query = $(this).val()
-    //     let catId = $(this).attr('data-catId');
-    //     //filterItems(query, catId);
-    //     filterItems2.call(this, query);
-    // })
-
-    console.log(parentCatNode);
-    console.log(rootMillerColumnCategory);
 }
 
 function MapClassificationsToParentMillerColumnCategory(parentCatNode, categoryId) {
@@ -132,47 +123,136 @@ function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentI
     return categoryItem;
 }
 
-
+///*** OLD Search approach ******** */
+//***
 // function filterItems(query, categoryId) {
 //     let foundCategory = getNestedCategoryById(rootMillerColumnCategory, categoryId);
 //     if (foundCategory)
 //         foundCategory.query = query;
 // }
 
+// function getNestedCategoryById(rootCategory, queryCategoryId) {
+//     if (rootCategory.categoryId === queryCategoryId)
+//         return rootCategory;
+//     else if (rootCategory?.items.length && queryCategoryId) {
+//         let result;
+//         for (let item of rootCategory.items) {
+//             if (!item.childCategory)
+//                 continue;
+//             result = getNestedCategoryById(item.childCategory, queryCategoryId);
+//             if (result)
+//                 return result;
+//         }
+//     }
+//     return null;
+// }
 
-
-function getNestedCategoryById(rootCategory, queryCategoryId) {
-    if (rootCategory.categoryId === queryCategoryId)
-        return rootCategory;
-    else if (rootCategory?.items.length && queryCategoryId) {
-        let result;
-        for (let item of rootCategory.items) {
-            if (!item.childCategory)
-                continue;
-            result = getNestedCategoryById(item.childCategory, queryCategoryId);
-            if (result)
-                return result;
-        }
-    }
-    return null;
-}
+///**** end old search approach ****** */
 
 function prepareCategoryNodeNestedNodes(categoryNode) {
     if (categoryNode?.Nodes?.length)
         for (let node of categoryNode.Nodes) {
-            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, node.nodes));
+            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, [...node.nodes]));
             let foundNodeIndex = categoryNode.Nodes.findIndex(x => x.id === node.id);
             categoryNode.nodes[foundNodeIndex] = node;
         }
     return categoryNode;
 }
 
-function getComplaintCategoriesNodes() {
+function getComplaintCategoriesNodes(dataItems) {
     let nodes = [];
-    for (let item of classificationsTree) {
-
-        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, item.nodes));
+    for (let item of dataItems) {
+        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, [...item.nodes]));
         nodes.push(node);
     }
     return nodes;
 }
+
+function prepareDataForMillerCols(dataItems) {
+    const complaintCategories = getComplaintCategoriesNodes(dataItems);
+    var parentCategoryNode = new BaseCategoryNode(null, null, complaintCategories);
+    rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCategoryNode, '1');
+    $millerCol = $("#category-miller-cols-container");
+
+    $millerCol.millerColumn({
+        isReadOnly: true,
+        initData: rootMillerColumnCategory
+    });
+}
+
+function FilterOnSearch(query) {
+    if (!query?.length)
+        return prepareDataForMillerCols(classificationsTree);
+
+    let searchResult = JSON.parse(JSON.stringify(classificationsTree)); // to clone the array with new different nested references
+    searchResult = searchResult.filter(item => filterItemAndNodes(item, query));
+    console.log('search results: ', searchResult);
+    if (searchResult?.length)
+        return prepareDataForMillerCols(searchResult);
+    return prepareDataForMillerCols(classificationsTree);
+}
+
+function filterItemAndNodes(item, query) {
+
+    //first step - loop through to filter nodes
+    if (item?.nodes?.length)
+        item.nodes = item.nodes.filter(item => filterItemAndNodes(item, query));
+
+    //last step - check if matched item 
+    if (item?.text && item.text.trim().includes(query)) {
+        item.result = true;
+        return true;
+    }
+    else // or has children that match
+        return item?.nodes?.length;
+}
+
+
+
+// function FilterOnSearch(query) {
+
+//     if (query == null || query.length == 0)
+//         return prepareTreeByArray(classificationsTree);
+//     let finalArray = [];
+//     classificationsTreeCopy.forEach(function (item, index) {
+//         let searchArray = [];
+//         let newItem = { ...item };
+//         filterArray(newItem, query, searchArray);
+//         if (searchArray.length > 0) {
+//             newItem.nodes = [...searchArray];
+//             finalArray.push(newItem);
+//         }
+//         else
+//             if (item.text.includes(query)) {
+//                 newItem.nodes = [];
+//                 finalArray.push(newItem);
+//             }
+
+
+//     });
+//     classificationsTreeCopy = [...classificationsTree];
+//     return prepareTreeByArray(finalArray);
+// }
+
+// function filterArray(node, query, searchArray) {
+//     let isSearchContained = false;
+//     if (node.nodes != null && node.nodes.length > 0) {
+//         node.nodes.forEach(function (item, index) {
+//             if (item.text.includes(query)) {
+//                 node.nodes = node.nodes.filter(x => x.text.includes(query));
+//                 isSearchContained = true;
+//             }
+//             filterArray(item, query, searchArray);
+//         });
+//     }
+//     if (isSearchContained) {
+//         let nodeIndx = searchArray.indexOf(node);
+//         if (nodeIndx > -1)
+//             searchArray[nodeIndx] = { ...node };
+//         else
+//             searchArray.push(node);
+
+//     }
+//     return;
+// }
+
