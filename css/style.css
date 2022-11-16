@@ -45,3 +45,10 @@ input#search_classifications {
 .list-item-search-result {
     background-color: #eded81 !important;
 }
+
+.favourable-item {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 15px;
+}
