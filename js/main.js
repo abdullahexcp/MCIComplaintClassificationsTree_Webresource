@@ -187,9 +187,7 @@ function FilterOnSearch(query) {
     let searchResult = JSON.parse(JSON.stringify(classificationsTree)); // to clone the array with new different nested references
     searchResult = searchResult.filter(item => filterItemAndNodes(item, query));
     console.log('search results: ', searchResult);
-    if (searchResult?.length)
-        return prepareDataForMillerCols(searchResult);
-    return prepareDataForMillerCols(classificationsTree);
+    return prepareDataForMillerCols(searchResult);
 }
 
 function filterItemAndNodes(item, query) {
