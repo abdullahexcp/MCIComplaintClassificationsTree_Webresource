@@ -40,3 +40,7 @@ input#search_classifications {
     padding-top: 10px;
     padding-bottom: 10px;
 }
+
+.list-item-search-result {
+    background-color: #eded81 !important;
+}

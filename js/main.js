@@ -1,5 +1,5 @@
 import classificationsTree from './complaintClassificationJson.json' assert {type: 'json'};
-var classificationsTreeCopy = [...classificationsTree];
+
 class MillerColumnCategory {
     constructor(categoryId = null, categoryName = null, parentId = null, isLowestLevel = true, items = []) {
         this.categoryId = categoryId;
@@ -26,7 +26,7 @@ class MillerColumnCategory {
 }
 
 class MillerColumnCategoryItem {
-    constructor(itemId, itemName, categoryId, parentId, childCategory) {
+    constructor(itemId, itemName, categoryId, parentId, searchResult, childCategory) {
         this.itemId = itemId ?? null;
         this.itemName = itemName ?? null;
         this.categoryId = categoryId ?? null;
@@ -34,13 +34,16 @@ class MillerColumnCategoryItem {
         this.hasChildren = childCategory ? true : false;
         this.childCategory = childCategory ?? null;
         this.isDeleteable = false;
+        this.searchResult = searchResult??null;
     }
 }
+
 class BaseCategoryNode {
-    constructor(id = null, text = null, nodes = []) {
+    constructor(id = null, text = null, nodes = [], searchResult = null) {
         this.Id = id;
         this.Text = text;
         this.Nodes = nodes;
+        this.searchResult = searchResult;
     }
 
     set Id(id = null) {
@@ -64,6 +67,12 @@ class BaseCategoryNode {
     get Nodes() {
         return this.nodes;
     }
+    set SearchResult(data) {
+        this.searchResult = data;
+    }
+    get SearchResult() {
+        return this.searchResult;
+    }
 }
 
 $(document).ready(onLoad);
@@ -84,8 +93,6 @@ function onLoad() {
     $('.filterItems').change(function () {
         let query = $(this).val()
         FilterOnSearch.call(this, query);
-        //let catId = $(this).attr('data-catId');
-        //filterItems(query, catId);
     });
 }
 
@@ -105,7 +112,7 @@ function MapClassificationsToParentMillerColumnCategory(parentCatNode, categoryI
 
 function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentId) {
     // 1 - prepare node as miller column item 
-    let categoryItem = new MillerColumnCategoryItem(categoryNode.Id, categoryNode.Text, parentCategoryId, parentId)
+    let categoryItem = new MillerColumnCategoryItem(categoryNode.Id, categoryNode.Text, parentCategoryId, parentId, categoryNode.SearchResult)
     // 2- prepare child category
     let childCategory = new MillerColumnCategory(categoryId, CATEGORIES.get(categoryId), parentCategoryId, categoryId == '3');
     if (categoryNode?.nodes?.length) {
@@ -123,36 +130,11 @@ function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentI
     return categoryItem;
 }
 
-///*** OLD Search approach ******** */
-//***
-// function filterItems(query, categoryId) {
-//     let foundCategory = getNestedCategoryById(rootMillerColumnCategory, categoryId);
-//     if (foundCategory)
-//         foundCategory.query = query;
-// }
-
-// function getNestedCategoryById(rootCategory, queryCategoryId) {
-//     if (rootCategory.categoryId === queryCategoryId)
-//         return rootCategory;
-//     else if (rootCategory?.items.length && queryCategoryId) {
-//         let result;
-//         for (let item of rootCategory.items) {
-//             if (!item.childCategory)
-//                 continue;
-//             result = getNestedCategoryById(item.childCategory, queryCategoryId);
-//             if (result)
-//                 return result;
-//         }
-//     }
-//     return null;
-// }
-
-///**** end old search approach ****** */
 
 function prepareCategoryNodeNestedNodes(categoryNode) {
     if (categoryNode?.Nodes?.length)
         for (let node of categoryNode.Nodes) {
-            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, [...node.nodes]));
+            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, [...node.nodes],node.searchResult ));
             let foundNodeIndex = categoryNode.Nodes.findIndex(x => x.id === node.id);
             categoryNode.nodes[foundNodeIndex] = node;
         }
@@ -162,7 +144,7 @@ function prepareCategoryNodeNestedNodes(categoryNode) {
 function getComplaintCategoriesNodes(dataItems) {
     let nodes = [];
     for (let item of dataItems) {
-        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, [...item.nodes]));
+        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, [...item.nodes], item.searchResult ));
         nodes.push(node);
     }
     return nodes;
@@ -198,59 +180,12 @@ function filterItemAndNodes(item, query) {
 
     //last step - check if matched item 
     if (item?.text && item.text.trim().includes(query)) {
-        item.result = true;
+        item.searchResult = {
+            startIndex: item.text.indexOf(query),
+            length: query.length
+        };
         return true;
     }
     else // or has children that match
         return item?.nodes?.length;
 }
-
-
-
-// function FilterOnSearch(query) {
-
-//     if (query == null || query.length == 0)
-//         return prepareTreeByArray(classificationsTree);
-//     let finalArray = [];
-//     classificationsTreeCopy.forEach(function (item, index) {
-//         let searchArray = [];
-//         let newItem = { ...item };
-//         filterArray(newItem, query, searchArray);
-//         if (searchArray.length > 0) {
-//             newItem.nodes = [...searchArray];
-//             finalArray.push(newItem);
-//         }
-//         else
-//             if (item.text.includes(query)) {
-//                 newItem.nodes = [];
-//                 finalArray.push(newItem);
-//             }
-
-
-//     });
-//     classificationsTreeCopy = [...classificationsTree];
-//     return prepareTreeByArray(finalArray);
-// }
-
-// function filterArray(node, query, searchArray) {
-//     let isSearchContained = false;
-//     if (node.nodes != null && node.nodes.length > 0) {
-//         node.nodes.forEach(function (item, index) {
-//             if (item.text.includes(query)) {
-//                 node.nodes = node.nodes.filter(x => x.text.includes(query));
-//                 isSearchContained = true;
-//             }
-//             filterArray(item, query, searchArray);
-//         });
-//     }
-//     if (isSearchContained) {
-//         let nodeIndx = searchArray.indexOf(node);
-//         if (nodeIndx > -1)
-//             searchArray[nodeIndx] = { ...node };
-//         else
-//             searchArray.push(node);
-
-//     }
-//     return;
-// }
-

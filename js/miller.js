@@ -292,7 +292,7 @@ function guid() {
 
             }
 
-            
+
             return this;
 
         } else if ("addItem" == args[0]) {
@@ -436,6 +436,10 @@ function guid() {
             millerColListItem.attr("data-is-deletable", item.isDeletable);
             millerColListItem.attr("data-item-name", item.itemName);
             millerColListItem.attr("data-item-icon", item.itemIcon);
+            // check to mark search results items
+            if (item.isSearchResult)
+                millerColListItem.addClass("search-item-result");
+
 
             var $listItemIcon = $("<i/>").addClass("material-icons list-item-icon");
             millerColListItem.append($listItemIcon);
@@ -443,7 +447,14 @@ function guid() {
             if (item.itemIcon != "" && item.itemIcon != null)
                 $listItemIcon.text(item.itemIcon);
 
-            millerColListItem.append($("<span/>").text(item.itemName).addClass("list-item-text"));
+            let itemText = item.itemName;
+            if (item.searchResult)
+                itemText = itemText.substr(0, item.searchResult.startIndex) +
+                    "<span class='list-item-search-result' >" +
+                    itemText.substr(item.searchResult.startIndex, item.searchResult.length) +
+                    "</span>" +
+                    itemText.substr(item.searchResult.startIndex + item.searchResult.length);
+            millerColListItem.append($("<span/>").html(itemText).addClass("list-item-text"));
 
             if (item.hasChildren)
                 millerColListItem.append($("<i/>").addClass("material-icons").text("navigate_next").addClass("has-children"));
