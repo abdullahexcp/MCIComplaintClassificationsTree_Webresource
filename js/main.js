@@ -34,7 +34,7 @@ class MillerColumnCategoryItem {
         this.hasChildren = childCategory ? true : false;
         this.childCategory = childCategory ?? null;
         this.isDeleteable = false;
-        this.searchResult = searchResult??null;
+        this.searchResult = searchResult ?? null;
     }
 }
 
@@ -134,7 +134,7 @@ function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentI
 function prepareCategoryNodeNestedNodes(categoryNode) {
     if (categoryNode?.Nodes?.length)
         for (let node of categoryNode.Nodes) {
-            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, [...node.nodes],node.searchResult ));
+            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, [...node.nodes], node.searchResult));
             let foundNodeIndex = categoryNode.Nodes.findIndex(x => x.id === node.id);
             categoryNode.nodes[foundNodeIndex] = node;
         }
@@ -144,7 +144,7 @@ function prepareCategoryNodeNestedNodes(categoryNode) {
 function getComplaintCategoriesNodes(dataItems) {
     let nodes = [];
     for (let item of dataItems) {
-        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, [...item.nodes], item.searchResult ));
+        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, [...item.nodes], item.searchResult));
         nodes.push(node);
     }
     return nodes;
@@ -167,21 +167,20 @@ function FilterOnSearch(query) {
         return prepareDataForMillerCols(classificationsTree);
 
     let searchResult = JSON.parse(JSON.stringify(classificationsTree)); // to clone the array with new different nested references
-    searchResult = searchResult.filter(item => filterItemAndNodes(item, query));
+    searchResult = searchResult.filter(item => filterItemAndNodes(item, query.toLowerCase()));
     console.log('search results: ', searchResult);
     return prepareDataForMillerCols(searchResult);
 }
 
 function filterItemAndNodes(item, query) {
-
     //first step - loop through to filter nodes
     if (item?.nodes?.length)
         item.nodes = item.nodes.filter(item => filterItemAndNodes(item, query));
 
     //last step - check if matched item 
-    if (item?.text && item.text.trim().includes(query)) {
+    if (item?.text && item.text.toLowerCase().includes(query)) {
         item.searchResult = {
-            startIndex: item.text.indexOf(query),
+            startIndex: item.text.toLowerCase().indexOf(query),
             length: query.length
         };
         return true;

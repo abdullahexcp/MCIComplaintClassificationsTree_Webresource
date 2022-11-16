@@ -27,18 +27,19 @@
 input#search_classifications {
     box-shadow: 0px 5px 4px rgb(0 0 0 / 5%);
     border-radius: 2px;
-    height: 2rem;
+    height: 2.5rem;
     width: 400px;
     padding-left: 12px;
     padding-right: 12px;
     border: 1px solid #DBDBDB;
     background: #f7f7f7ee;
+    font-size: 1rem;
 }
 
 .miller-cols-container-wrapper.search-container {
-    height: 44px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    height: 50px;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .list-item-search-result {
