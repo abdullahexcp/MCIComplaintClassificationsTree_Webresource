@@ -1031,7 +1031,7 @@ function guid() {
 
                 //Firing delete-item event.
                 var data = getCategoryItem.call(currentItemContainer);
-
+                console.log("item to be deleted :", data)
                 $(currentItemContainer).trigger("delete-item", data);
 
                 if (isDebugEnabled) {

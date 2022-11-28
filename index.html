@@ -12,13 +12,16 @@
     <link rel="stylesheet" href="css/style.css" />
     <script type="text/javascript" src="js/jquery.js"></script>
     <script type="module" src="js/miller.js"></script>
+    <script type="text/javascript" src="js/simple-popup.min.js"></script>
+
 </head>
 
 <body>
     <div class="miller-cols-container-wrapper search-container">
-        <input id="search_classifications" placeholder="Search for categories/classifications" class="miller-search filterItems" type="search" />
+        <input id="search_classifications" placeholder="Search for categories/classifications"
+            class="miller-search filterItems" type="search" />
     </div>
-    <div id="category-miller-cols-container">
+    <div id="category-miller-cols-container" data-is-read-only="false">
     </div>
     <script type="module" src="js/main.js"></script>
 </body>
