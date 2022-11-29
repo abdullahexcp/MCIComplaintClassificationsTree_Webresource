@@ -38,10 +38,12 @@ class MillerColumnCategoryItem {
 }
 
 class BaseCategoryNode {
-    constructor(id = null, text = null, categoryId = null, nodes = [], searchResult = null) {
+    constructor(id = null, text = null, value = null, categoryId = null, parentNodeId = null, nodes = [], searchResult = null) {
         this.id = id;
         this.text = text;
+        this.value = value;
         this.categoryId = categoryId;
+        this.parentNodeId = parentNodeId;
         this.nodes = nodes;
         this.searchResult = searchResult;
     }
@@ -85,13 +87,13 @@ function MapClassificationsToParentMillerColumnCategory(parentCatNode, categoryI
 
 function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentId) {
     // 1 - prepare node as miller column item 
-    let categoryItem = new MillerColumnCategoryItem(categoryNode.id, categoryNode.text, parentCategoryId, parentId, categoryNode.searchResult)
+    let categoryItem = new MillerColumnCategoryItem(categoryNode.value, categoryNode.text, parentCategoryId, parentId, categoryNode.searchResult)
     // 2- prepare child category
     let childCategory = new MillerColumnCategory(categoryId, CATEGORIES.get(categoryId), parentCategoryId, categoryId == '3');
     if (categoryNode?.nodes?.length) {
         //3- populate child category items using  cat nodes
         for (let node of categoryNode.nodes) {
-            let millerColumnCategoryItem = prepareCategoryItem(node, (Number(categoryId) + 1) + "", categoryId, categoryNode.id);
+            let millerColumnCategoryItem = prepareCategoryItem(node, (Number(categoryId) + 1) + "", categoryId, categoryNode.value);
             childCategory.items.push(millerColumnCategoryItem);
         }
 
@@ -104,21 +106,24 @@ function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentI
 }
 
 
-function prepareCategoryNodeNestedNodes(categoryNode) {
-    if (categoryNode?.nodes?.length)
-        for (let node of categoryNode.nodes) {
-            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(node.id, node.text, (parseInt(categoryNode.categoryId) + 1) + "", node.nodes, node.searchResult));
-            let foundNodeIndex = categoryNode.nodes.findIndex(x => x.id === node.id);
-            if (foundNodeIndex > -1)
-                categoryNode.nodes[foundNodeIndex] = node;
+function prepareCategoryNodeNestedNodes(parentNode) {
+    if (parentNode?.nodes?.length)
+        for (let itemIndex in parentNode.nodes) {
+            let node = parentNode.nodes[itemIndex];
+            let categoryId = (Number(parentNode.categoryId) + 1) + "";
+            let uid = parentNode.id + '-' + (Number(itemIndex) + 1);
+            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(uid, node.text, node.id, categoryId, parentNode.id, node.nodes, node.searchResult));
+            parentNode.nodes[itemIndex] = node;
         }
-    return categoryNode;
+    return parentNode;
 }
 
 function getComplaintCategoriesNodes(dataItems) {
     let nodes = [];
-    for (let item of dataItems) {
-        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(item.id, item.text, "1", item.nodes, item.searchResult));
+    for (let itemIndex in dataItems) {
+        let item = dataItems[itemIndex];
+        let uid = (Number(itemIndex) + 1) + "";
+        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(uid, item.text, item.id, "1", null, item.nodes, item.searchResult));
         nodes.push(node);
     }
     return nodes;
@@ -127,7 +132,7 @@ var complaintCategories;
 function prepareDataForMillerCols() {
     if (!complaintCategories?.length)
         complaintCategories = getComplaintCategoriesNodes(classificationsTree);
-    var parentCategoryNode = new BaseCategoryNode(null, null, null, complaintCategories);
+    var parentCategoryNode = new BaseCategoryNode(null, null, null, null, null, complaintCategories);
     rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCategoryNode, '1');
     $millerCol = $("#category-miller-cols-container");
 
@@ -205,21 +210,39 @@ function setupEditEventsOnMillerCols() {
         $(dialog).find(".button.create").on("click touch", function (event) {
 
             var itemName = $(this).closest("#popup").find("input[name='itemName']").val();
-            var iconName = $(this).closest("#popup").find("i[name='iconName']").html();
-            if (iconName == "clear") iconName = "";
+            // var iconName = $(this).closest("#popup").find("i[name='iconName']").html();
+            // if (iconName == "clear") iconName = "";
 
-            var categoryItem = new CategoryItem();
+            // var categoryItem = new MillerColumnCategoryItem();
 
-            categoryItem.setItemName(itemName);
-            categoryItem.setCategoryId(data.categoryId);
-            categoryItem.setParentId(data.parentId);
-            categoryItem.setItemIcon(iconName);
-            categoryItem.setHasChildren(false);
-            categoryItem.setIsDeletable(false);
+            // categoryItem.itemName = itemName;
+            // categoryItem.categoryId = data.categoryId;
+            // categoryItem.parentId = data.parentId;
+            // categoryItem.hasChildren = true;
+            // categoryItem.isDeletable = true;
 
-            //itemCategories.insert(categoryItem);
 
-            $millerCol.millerColumn("addItem", categoryItem);
+            // $millerCol.millerColumn("addItem", categoryItem);
+
+            /////////
+            let parentCategoryId = (parseInt(data.categoryId) - 1) + "";
+
+            let uid = Number(data.itemId) + '-';
+            let insertedNode = new BaseCategoryNode("", itemName, Math.round(Math.random() * 100) + "", data.categoryId);
+            if (parentCategoryId == "0") {//top parent node
+                uid += complaintCategories.length + 1;
+                insertedNode.id = uid;
+                complaintCategories.push(insertedNode);
+            }
+            else {
+                let categoryNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.parentId);
+                uid += categoryNode.nodes.length + 1;
+                insertedNode.id = uid;
+                insertedNode.parentNodeId = categoryNode.id;
+                categoryNode.nodes.push(insertedNode);
+            }
+            
+            prepareDataForMillerCols();
 
             $("#popup").remove();
 
@@ -272,11 +295,8 @@ function setupEditEventsOnMillerCols() {
         $(dialog).find(".button.create").on("click touch", function (event) {
 
             var catName = $(this).closest("#popup").find("input[name='categoryName']").val();
-
             data.categoryName = catName;
-
-            //itemCategories.insert(categoryItem);
-
+            CATEGORIES.set(data.categoryId, data.categoryName);
             $millerCol.millerColumn("updateCategory", data);
 
             $("#popup").remove();
@@ -318,9 +338,8 @@ function setupEditEventsOnMillerCols() {
 
         $(dialog).find(".button.delete").on("click touch", function () {
             debugger
-            findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, complaintCategories), data.categoryId, data.itemId, true);
+            findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.itemId, true);
             prepareDataForMillerCols();
-            //$millerCol.millerColumn("deleteItem", categoryItem);
             $("#popup").remove();
 
         });
@@ -374,20 +393,14 @@ function setupEditEventsOnMillerCols() {
 
         $(dialog).find(".button.positive").on("click touch", function () {
 
-            var itemName = $(this).closest("#popup").find("input[name='itemName']").val();
-            var iconName = $(this).closest("#popup").find("i[name='iconName']").html();
+            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
+            let iconName = $(this).closest("#popup").find("i[name='iconName']").html();
             if (iconName == "clear") iconName = "";
 
-            var categoryItem = itemCategories.findOne({
-                itemId: data.itemId
-            });
+            let categoryItem = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.itemId)
 
-            data.itemName = itemName;
-            data.iconName = iconName;
-
-            //itemCategories.update(data);
-
-            $millerCol.millerColumn("updateItem", data);
+            categoryItem.text = itemName;
+            prepareDataForMillerCols();
 
             $("#popup").remove();
 
@@ -423,14 +436,14 @@ function setupEditEventsOnMillerCols() {
         return $dialog.append($dialogContent);
     }
 
-    const findDeleteNodeByNodeIdCatId = function (rootNode, queryCategoryId, queryItemId, queryDelete = false) {
+    const findDeleteNodeByNodeIdCatId = function (rootNode, queryItemId, queryDelete = false) {
 
-        if (rootNode?.nodes.length && queryCategoryId && queryItemId) {
+        if (rootNode?.nodes.length && queryItemId) {
             let result;
             for (let item of rootNode.nodes) {
-                if (item.id == queryItemId && item.categoryId == queryCategoryId) {
+                if (item.id == queryItemId) {
                     if (queryDelete) {
-                        if (queryCategoryId == "1")//remove from top category items list
+                        if (queryCategoryId == "1")//remove from top parent category items list
                             complaintCategories = complaintCategories.filter(x => x.id != item.id);
                         else
                             rootNode.nodes = rootNode.nodes.filter(x => x.id != item.id);
@@ -438,7 +451,7 @@ function setupEditEventsOnMillerCols() {
                     return item;
                 }
                 else {
-                    result = findDeleteNodeByNodeIdCatId(item, queryCategoryId, queryItemId, queryDelete);
+                    result = findDeleteNodeByNodeIdCatId(item, queryItemId, queryDelete);
                     if (result)
                         return result;
                 }
