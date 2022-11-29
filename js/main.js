@@ -429,8 +429,12 @@ function setupEditEventsOnMillerCols() {
             let result;
             for (let item of rootNode.nodes) {
                 if (item.id == queryItemId && item.categoryId == queryCategoryId) {
-                    if (queryDelete)
-                        rootNode.nodes = rootNode.nodes.filter(x => x.id != item.id);
+                    if (queryDelete) {
+                        if (queryCategoryId == "1")//remove from top category items list
+                            complaintCategories = complaintCategories.filter(x => x.id != item.id);
+                        else
+                            rootNode.nodes = rootNode.nodes.filter(x => x.id != item.id);
+                    }
                     return item;
                 }
                 else {
