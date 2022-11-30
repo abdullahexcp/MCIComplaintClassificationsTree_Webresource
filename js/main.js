@@ -132,10 +132,13 @@ function getComplaintCategoriesNodes(dataItems) {
     return nodes;
 }
 var complaintCategories;
-function prepareDataForMillerCols() {
-    if (!complaintCategories?.length)
-        complaintCategories = getComplaintCategoriesNodes(classificationsTree);
-    var parentCategoryNode = new BaseCategoryNode(null, null, null, null, null, complaintCategories);
+function prepareDataForMillerCols(searchResult = null) {
+    let dataTreeList = JSON.parse(JSON.stringify(complaintCategories ?? []));
+    if (!dataTreeList?.length)
+        dataTreeList = complaintCategories = getComplaintCategoriesNodes(classificationsTree);
+    else if (searchResult)
+        dataTreeList = searchResult;
+    let parentCategoryNode = new BaseCategoryNode(null, null, null, null, null, dataTreeList);
     rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCategoryNode, '1');
     $millerCol = $("#category-miller-cols-container");
 
@@ -147,9 +150,9 @@ function prepareDataForMillerCols() {
 
 function FilterOnSearch(query) {
     if (!query?.length)
-        return prepareDataForMillerCols(classificationsTree);
+        return prepareDataForMillerCols();
 
-    let searchResult = JSON.parse(JSON.stringify(classificationsTree)); // to clone the array with new different nested references
+    let searchResult = JSON.parse(JSON.stringify(complaintCategories)); // to clone the array with new different nested references
     searchResult = searchResult.filter(item => filterItemAndNodes(item, query.toLowerCase()));
     console.log('search results: ', searchResult);
     return prepareDataForMillerCols(searchResult);
