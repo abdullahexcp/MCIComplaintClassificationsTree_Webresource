@@ -171,38 +171,44 @@ function filterItemAndNodes(item, query) {
     else // or has children that match
         return item?.nodes?.length;
 }
+var iconList = [];
 
+function prepareDialogFullBody() {
+
+    let dialogFullbody = $("<div/>");
+    let dialogBody = $("<div/>").addClass("middle-body");
+
+    dialogBody.append($("<i/>").attr("id", "element-icon").attr("name", "iconName").addClass("material-icons").addClass("dropbtn").text("clear").attr("onclick", "toggleDropdown()"));
+
+    let dialogDropdown = $("<div/>").attr("id", "myDropdown").addClass("dropdown-content");
+
+    for (var k = 0; k < iconList.length; k++) {
+        $dialogDropdown.append($("<div/>").addClass("dropdown-element").append($("<i/>").addClass("material-icons").text(iconList[k])));
+    }
+
+    dialogBody.append(dialogDropdown);
+
+    dialogBody.append($("<input/>").attr("name", "itemName"));
+    dialogBody.append($("<div/>").addClass("clearfix"));
+
+    let dialogFooter = $("<div/>").addClass("footer");
+    let buttonCreate = $("<button/>").attr("type", "button").addClass("button create").append($("<i/>").addClass("material-icons").addClass("add").text("add"));
+
+    dialogFooter.append(buttonCreate).append($("<div/>").addClass("clearfix"));
+
+    dialogFullbody.append(dialogBody);
+    dialogFullbody.append(dialogFooter);
+
+    return dialogFullbody;
+}
 
 function setupEditEventsOnMillerCols() {
-    var iconList = [];
 
-    $millerCol.on("add-item", ".miller-col-container", function (event, data) {
+    $millerCol.on("col-add-item", ".miller-col-container", function (event, data) {
+        debugger
 
-        var $dialogFullbody = $("<div/>");
-        var $dialogBody = $("<div/>").addClass("middle-body");
-
-        $dialogBody.append($("<i/>").attr("id", "element-icon").attr("name", "iconName").addClass("material-icons").addClass("dropbtn").text("clear").attr("onclick", "toggleDropdown()"));
-
-        var $dialogDropdown = $("<div/>").attr("id", "myDropdown").addClass("dropdown-content");
-
-        for (var k = 0; k < iconList.length; k++) {
-            $dialogDropdown.append($("<div/>").addClass("dropdown-element").append($("<i/>").addClass("material-icons").text(iconList[k])));
-        }
-
-        $dialogBody.append($dialogDropdown);
-
-        $dialogBody.append($("<input/>").attr("name", "itemName"));
-        $dialogBody.append($("<div/>").addClass("clearfix"));
-
-        var $dialogFooter = $("<div/>").addClass("footer");
-        var $buttonCreate = $("<button/>").attr("type", "button").addClass("button create").append($("<i/>").addClass("material-icons").addClass("add").text("add"));
-
-        $dialogFooter.append($buttonCreate).append($("<div/>").addClass("clearfix"));
-
-        $dialogFullbody.append($dialogBody);
-        $dialogFullbody.append($dialogFooter);
-
-        var dialog = createDialog($dialogFullbody, "Create child for: " + data.categoryName);
+        let dialogFullbody = prepareDialogFullBody();
+        var dialog = createDialog(dialogFullbody, "Create child for: " + data.itemName);
 
         $(dialog).on("click touch", ".popup-close", function () {
 
@@ -212,38 +218,71 @@ function setupEditEventsOnMillerCols() {
 
         $(dialog).find(".button.create").on("click touch", function (event) {
 
-            var itemName = $(this).closest("#popup").find("input[name='itemName']").val();
-            // var iconName = $(this).closest("#popup").find("i[name='iconName']").html();
-            // if (iconName == "clear") iconName = "";
+            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
 
-            // var categoryItem = new MillerColumnCategoryItem();
-
-            // categoryItem.itemName = itemName;
-            // categoryItem.categoryId = data.categoryId;
-            // categoryItem.parentId = data.parentId;
-            // categoryItem.hasChildren = true;
-            // categoryItem.isDeletable = true;
-
-
-            // $millerCol.millerColumn("addItem", categoryItem);
-
-            /////////
             let parentCategoryId = (parseInt(data.categoryId) - 1) + "";
 
             let uid = Number(data.itemId) + '-';
-            let insertedNode = new BaseCategoryNode("", itemName, Math.round(Math.random() * 100) + "", data.categoryId);
+            let insertedNode = new BaseCategoryNode("", itemName, Math.round(Math.random() * 100) + "", data.categoryId, data.itemId);
             if (parentCategoryId == "0") {//top parent node
                 uid += complaintCategories.length + 1;
                 insertedNode.id = uid;
                 complaintCategories.push(insertedNode);
             }
             else {
-                let categoryNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.parentId);
-                uid += categoryNode.nodes.length + 1;
+                let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.parentId);
+                uid += parentNode.nodes.length + 1;
                 insertedNode.id = uid;
-                insertedNode.parentNodeId = categoryNode.id;
-                categoryNode.nodes.push(insertedNode);
+                insertedNode.parentNodeId = parentNode.id;
+                parentNode.nodes.push(insertedNode);
             }
+
+
+            prepareDataForMillerCols();
+
+            $("#popup").remove();
+
+        });
+
+        $("body").append(dialog);
+
+        dialog = dialog.popup({
+            width: 400,
+            height: "auto",
+            top: 100
+        });
+
+        dialog.open();
+
+    });
+
+    $millerCol.on("add-item", ".miller-col-list-item", function (event, data) {
+        debugger
+
+        let dialogFullbody = prepareDialogFullBody();
+        var dialog = createDialog(dialogFullbody, "Create child for: " + data.itemName);
+
+        $(dialog).on("click touch", ".popup-close", function () {
+
+            $("#popup").remove();
+
+        });
+
+        $(dialog).find(".button.create").on("click touch", function (event) {
+
+            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
+
+            // data is the parent item
+            let childCategoryId = (Number(data.categoryId) + 1) + "";
+
+            let uid = Number(data.itemId) + '-';
+            let insertedNode = new BaseCategoryNode("", itemName, Math.round(Math.random() * 100) + "" /* TODO add value input, also edit */, childCategoryId, data.itemId);
+
+            let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.itemId);
+            uid += parentNode.nodes.length + 1;
+            insertedNode.id = uid;
+            insertedNode.parentNodeId = parentNode.id;
+            parentNode.nodes.push(insertedNode);
 
             prepareDataForMillerCols();
 
@@ -420,7 +459,7 @@ function setupEditEventsOnMillerCols() {
         dialog.open();
     });
 
-    const createDialog = function ($dialogBodyContent, dialogTitle) {
+    const createDialog = function (dialogBodyContent, dialogTitle) {
 
         //remove prev popup instances
         $("#popup").remove();
@@ -430,7 +469,7 @@ function setupEditEventsOnMillerCols() {
         var $dialogTitle = $("<div/>").addClass("popup-title");
         var $btnClose = $("<button/>").attr("type", "button").addClass("popup-close").text("X");
         var $h3 = $("<h3/>").text(dialogTitle);
-        var $dialogBody = $("<div/>").addClass("popup-body").append($dialogBodyContent);
+        var $dialogBody = $("<div/>").addClass("popup-body").append(dialogBodyContent);
 
         $dialogTitle.append($btnClose).append($h3);
 
@@ -446,7 +485,7 @@ function setupEditEventsOnMillerCols() {
             for (let item of rootNode.nodes) {
                 if (item.id == queryItemId) {
                     if (queryDelete) {
-                        if (queryCategoryId == "1")//remove from top parent category items list
+                        if (queryItemId.split('-').length == 1)//if top parent list as recognized by '-' of nested uid
                             complaintCategories = complaintCategories.filter(x => x.id != item.id);
                         else
                             rootNode.nodes = rootNode.nodes.filter(x => x.id != item.id);

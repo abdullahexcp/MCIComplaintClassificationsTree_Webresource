@@ -268,7 +268,9 @@ function guid() {
                 if (!readOnly) {
                     var millerColAction = $("<span/>").addClass("miller-col-actions");
                     millerColAction.append($("<i/>").addClass("material-icons").addClass("action-edit").addClass("miller-col-title-icons").text("edit"));
-                    millerColAction.append($("<i/>").addClass("material-icons").addClass("action-add").addClass("miller-col-title-icons").text("add"));
+                    //custom case for category id = 1
+                    if (category.categoryId == "1")
+                        millerColAction.append($("<i/>").addClass("material-icons").addClass("action-add").addClass("miller-col-title-icons").text("add"));
                     millerColTitleText.append(millerColAction);
                 }
 
@@ -465,7 +467,7 @@ function guid() {
             if (false == readOnly) {
                 var listItemActions = $("<span/>").addClass("list-item-actions").append($("<i/>").addClass("material-icons").addClass("edit").text("edit"));
                 listItemActions.append($("<i/>").addClass("material-icons").addClass("delete").text("delete"));
-
+                listItemActions.append($("<i/>").addClass("material-icons").addClass("action-add").text("add"));
                 millerColListItem.append(listItemActions);
             }
 
@@ -1053,7 +1055,22 @@ function guid() {
                 if (parentColContainer)
                     data.parentId = $(parentColContainer).find(getColListItemSelector()).filter(SELECTOR_IS_SELECTED).data("item-id");
 
-                $(currentColContainer).trigger("add-item", data);
+                $(currentColContainer).trigger("col-add-item", data);
+
+                if (isDebugEnabled) {
+                    console.log("fired add item event: " + JSON.stringify(data));
+                }
+
+            });
+
+            getMillerColsBody.call(millerColumn).on("click", ".list-item-actions .action-add", function () {
+
+                var currentItemContainer = $(this).closest(getColListItemSelector());
+
+                //Firing add-item event.
+                var data = getCategoryItem.call(currentItemContainer);
+
+                $(currentItemContainer).trigger("add-item", data);
 
                 if (isDebugEnabled) {
                     console.log("fired add item event: " + JSON.stringify(data));
