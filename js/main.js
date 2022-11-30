@@ -25,9 +25,10 @@ class MillerColumnCategory {
 }
 
 class MillerColumnCategoryItem {
-    constructor(itemId, itemName, categoryId, parentId, searchResult, childCategory) {
+    constructor(itemId, itemName, itemValue, categoryId, parentId, searchResult, childCategory) {
         this.itemId = itemId ?? null;
         this.itemName = itemName ?? null;
+        this.itemValue = itemValue ?? null;
         this.categoryId = categoryId ?? null;
         this.parentId = parentId ?? null;
         this.hasChildren = childCategory ? true : false;
@@ -87,20 +88,22 @@ function MapClassificationsToParentMillerColumnCategory(parentCatNode, categoryI
 
 function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentId) {
     // 1 - prepare node as miller column item 
-    let categoryItem = new MillerColumnCategoryItem(categoryNode.value, categoryNode.text, parentCategoryId, parentId, categoryNode.searchResult)
-    // 2- prepare child category
-    let childCategory = new MillerColumnCategory(categoryId, CATEGORIES.get(categoryId), parentCategoryId, categoryId == '3');
+    let categoryItem = new MillerColumnCategoryItem(categoryNode.id, categoryNode.text, categoryNode.value, parentCategoryId, parentId, categoryNode.searchResult)
     if (categoryNode?.nodes?.length) {
+        // 2- prepare child category
+        let childCategory = new MillerColumnCategory(categoryId, CATEGORIES.get(categoryId), parentCategoryId, categoryId == '3');
+
         //3- populate child category items using  cat nodes
         for (let node of categoryNode.nodes) {
-            let millerColumnCategoryItem = prepareCategoryItem(node, (Number(categoryId) + 1) + "", categoryId, categoryNode.value);
+            let millerColumnCategoryItem = prepareCategoryItem(node, (Number(categoryId) + 1) + "", categoryId, categoryNode.id);
             childCategory.items.push(millerColumnCategoryItem);
         }
 
         categoryItem.hasChildren = true;
+
+        //4- set child category
+        categoryItem.childCategory = childCategory;
     }
-    //4- set child category
-    categoryItem.childCategory = childCategory;
 
     return categoryItem;
 }
@@ -171,7 +174,7 @@ function filterItemAndNodes(item, query) {
 
 
 function setupEditEventsOnMillerCols() {
-    var iconList = ["clear", "store", "call", "wifi", "portrait"];
+    var iconList = [];
 
     $millerCol.on("add-item", ".miller-col-container", function (event, data) {
 
@@ -241,7 +244,7 @@ function setupEditEventsOnMillerCols() {
                 insertedNode.parentNodeId = categoryNode.id;
                 categoryNode.nodes.push(insertedNode);
             }
-            
+
             prepareDataForMillerCols();
 
             $("#popup").remove();
