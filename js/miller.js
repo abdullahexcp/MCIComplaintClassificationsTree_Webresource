@@ -351,6 +351,8 @@ function guid() {
             if (null != listUpdatedItem) {
                 listUpdatedItem.find(".list-item-text").text(updatedtemData.itemName);
                 listUpdatedItem.attr("data-item-name", updatedtemData.itemName);
+                if (item?.itemAnswer)
+                    listUpdatedItem.attr("data-item-answer", item.itemAnswer);
                 listUpdatedItem.find(".list-item-icon").text(updatedtemData.itemIcon);
                 listUpdatedItem.attr("data-item-icon", updatedtemData.itemIcon);
             }
@@ -437,6 +439,8 @@ function guid() {
             millerColListItem.attr("data-category-id", item.categoryId);
             millerColListItem.attr("data-is-deletable", item.isDeletable);
             millerColListItem.attr("data-item-name", item.itemName);
+            if (item?.itemAnswer)
+                millerColListItem.attr("data-item-answer", item.itemAnswer);
             millerColListItem.attr("data-item-icon", item.itemIcon);
             // check to mark search results items
             if (item.isSearchResult)
@@ -450,6 +454,7 @@ function guid() {
                 $listItemIcon.text(item.itemIcon);
 
             let itemText = item.itemName;
+
             if (item.searchResult)
                 itemText = itemText.substr(0, item.searchResult.startIndex) +
                     "<span class='list-item-search-result' >" +
@@ -457,6 +462,8 @@ function guid() {
                     "</span>" +
                     itemText.substr(item.searchResult.startIndex + item.searchResult.length);
             millerColListItem.append($("<span/>").html(itemText).addClass("list-item-text"));
+            if (item?.itemAnswer)
+                millerColListItem.append($("<span/>").html(item.itemAnswer).addClass("list-item-text"));
 
             if (item.hasChildren)
                 millerColListItem.append($("<i/>").addClass("material-icons").text("navigate_next").addClass("has-children"));

@@ -1,4 +1,6 @@
 import classificationsTree from './complaintClassificationJson.json' assert {type: 'json'};
+var selectedItems = new Map();
+
 class MillerColumnCategory {
     constructor(categoryId = null, categoryName = null, parentId = null, isLowestLevel = true, items = []) {
         this.categoryId = categoryId;
@@ -25,10 +27,11 @@ class MillerColumnCategory {
 }
 
 class MillerColumnCategoryItem {
-    constructor(itemId, itemName, itemValue, categoryId, parentId, searchResult, childCategory) {
+    constructor(itemId, itemName, itemValue, itemAnswer, categoryId, parentId, searchResult, childCategory) {
         this.itemId = itemId ?? null;
         this.itemName = itemName ?? null;
         this.itemValue = itemValue ?? null;
+        this.itemAnswer = itemAnswer ?? null;
         this.categoryId = categoryId ?? null;
         this.parentId = parentId ?? null;
         this.hasChildren = childCategory ? true : false;
@@ -39,10 +42,11 @@ class MillerColumnCategoryItem {
 }
 
 class BaseCategoryNode {
-    constructor(id = null, text = null, value = null, categoryId = null, parentNodeId = null, nodes = [], searchResult = null) {
+    constructor(id = null, text = null, answer = null, value = null, categoryId = null, parentNodeId = null, nodes = [], searchResult = null) {
         this.id = id;
         this.text = text;
         this.value = value;
+        this.answer = answer;
         this.categoryId = categoryId;
         this.parentNodeId = parentNodeId;
         this.nodes = nodes;
@@ -63,9 +67,8 @@ function onLoad() {
     CATEGORIES.set('3', 'Sub Classification');
 
     prepareDataForMillerCols();
-
     setupEditEventsOnMillerCols();
-
+    OnSelectItemsSave();
     $('.filterItems').val('').trigger('change');
     $('.filterItems').change(function () {
         let query = $(this).val()
@@ -88,7 +91,7 @@ function MapClassificationsToParentMillerColumnCategory(parentCatNode, categoryI
 
 function prepareCategoryItem(categoryNode, categoryId, parentCategoryId, parentId) {
     // 1 - prepare node as miller column item 
-    let categoryItem = new MillerColumnCategoryItem(categoryNode.id, categoryNode.text, categoryNode.value, parentCategoryId, parentId, categoryNode.searchResult)
+    let categoryItem = new MillerColumnCategoryItem(categoryNode.id, categoryNode.text, categoryNode.value, categoryNode.answer, parentCategoryId, parentId, categoryNode.searchResult)
     if (categoryNode?.nodes?.length) {
         // 2- prepare child category
         let childCategory = new MillerColumnCategory(categoryId, CATEGORIES.get(categoryId), parentCategoryId, categoryId == '3');
@@ -115,7 +118,7 @@ function prepareCategoryNodeNestedNodes(parentNode) {
             let node = parentNode.nodes[itemIndex];
             let categoryId = (Number(parentNode.categoryId) + 1) + "";
             let uid = parentNode.id + '-' + (Number(itemIndex) + 1);
-            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(uid, node.text, node.id, categoryId, parentNode.id, node.nodes, node.searchResult));
+            node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(uid, node.text, node.answer ?? null, node.id, categoryId, parentNode.id, node.nodes, node.searchResult));
             parentNode.nodes[itemIndex] = node;
         }
     return parentNode;
@@ -126,19 +129,21 @@ function getComplaintCategoriesNodes(dataItems) {
     for (let itemIndex in dataItems) {
         let item = dataItems[itemIndex];
         let uid = (Number(itemIndex) + 1) + "";
-        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(uid, item.text, item.id, "1", null, item.nodes, item.searchResult));
+        let node = prepareCategoryNodeNestedNodes(new BaseCategoryNode(uid, item.text, item.answer ?? null, item.id, "1", null, item.nodes, item.searchResult));
         nodes.push(node);
     }
     return nodes;
 }
+
 var complaintCategories;
+
 function prepareDataForMillerCols(searchResult = null) {
     let dataTreeList = JSON.parse(JSON.stringify(complaintCategories ?? []));
     if (!dataTreeList?.length)
         dataTreeList = complaintCategories = getComplaintCategoriesNodes(classificationsTree);
     else if (searchResult)
         dataTreeList = searchResult;
-    let parentCategoryNode = new BaseCategoryNode(null, null, null, null, null, dataTreeList);
+    let parentCategoryNode = new BaseCategoryNode(null, null, null, null, null, null, dataTreeList);
     rootMillerColumnCategory = MapClassificationsToParentMillerColumnCategory(parentCategoryNode, '1');
     $millerCol = $("#category-miller-cols-container");
 
@@ -146,6 +151,20 @@ function prepareDataForMillerCols(searchResult = null) {
         isReadOnly: false,
         initData: rootMillerColumnCategory
     });
+    //
+    RestoreSelectedItems();
+}
+
+function RestoreSelectedItems() {
+    if (selectedItems?.size) {
+        selectedItems = new Map([...selectedItems].sort());
+        for (let [key, value] of selectedItems) {
+            let item = getMillerColItemById(rootMillerColumnCategory, value);
+            if (item) {
+                $(`.miller-col-container[data-category-id="${key}"]`).trigger('item-selected', item);
+            }
+        }
+    }
 }
 
 function FilterOnSearch(query) {
@@ -176,7 +195,7 @@ function filterItemAndNodes(item, query) {
 }
 var iconList = [];
 
-function prepareDialogFullBody() {
+function prepareDialogFullBody(isQA = false) {
 
     let dialogFullbody = $("<div/>");
     let dialogBody = $("<div/>").addClass("middle-body");
@@ -190,8 +209,13 @@ function prepareDialogFullBody() {
     }
 
     dialogBody.append(dialogDropdown);
-
-    dialogBody.append($("<input/>").attr("name", "itemName"));
+    dialogBody.append($("<input/>").attr("name", "itemValue").attr("placeholder", "enter item value"));
+    if (!isQA) {
+        dialogBody.append($("<input/>").attr("name", "itemName").attr("placeholder", "enter item name"));
+    } else {
+        dialogBody.append($("<input/>").attr("name", "itemQuestion").attr("placeholder", "enter question"));
+        dialogBody.append($("<input/>").attr("name", "itemAnswer").attr("placeholder", "enter answer"));
+    }
     dialogBody.append($("<div/>").addClass("clearfix"));
 
     let dialogFooter = $("<div/>").addClass("footer");
@@ -205,12 +229,19 @@ function prepareDialogFullBody() {
     return dialogFullbody;
 }
 
+function OnSelectItemsSave() {
+    $millerCol.on("item-selected", ".miller-col-list-item", function (event, data) {
+        if (data.categoryId)
+            selectedItems.set(data.categoryId, data.itemId);
+    });
+}
+
 function setupEditEventsOnMillerCols() {
 
     $millerCol.on("col-add-item", ".miller-col-container", function (event, data) {
         debugger
-
-        let dialogFullbody = prepareDialogFullBody();
+        let isQA = data.categoryId == 2 /* for QA */;
+        let dialogFullbody = prepareDialogFullBody(isQA);
         var dialog = createDialog(dialogFullbody, "Create child for: " + data.itemName);
 
         $(dialog).on("click touch", ".popup-close", function () {
@@ -221,19 +252,28 @@ function setupEditEventsOnMillerCols() {
 
         $(dialog).find(".button.create").on("click touch", function (event) {
 
-            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
+
+            let itemValue = $(this).closest("#popup").find("input[name='itemValue']").val();
+            let itemName, itemAnswer;
+
+            if (isQA) {
+                itemName = $(this).closest("#popup").find("input[name='itemQuestion']").val();
+                itemAnswer = $(this).closest("#popup").find("input[name='itemAnswer']").val();
+            }
+            else
+                itemName = $(this).closest("#popup").find("input[name='itemName']").val();
 
             let parentCategoryId = (parseInt(data.categoryId) - 1) + "";
 
             let uid = Number(data.itemId) + '-';
-            let insertedNode = new BaseCategoryNode("", itemName, Math.round(Math.random() * 100) + "", data.categoryId, data.itemId);
+            let insertedNode = new BaseCategoryNode("", itemName, itemAnswer ?? null, itemValue, data.categoryId, data.itemId);
             if (parentCategoryId == "0") {//top parent node
                 uid += complaintCategories.length + 1;
                 insertedNode.id = uid;
                 complaintCategories.push(insertedNode);
             }
             else {
-                let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.parentId);
+                let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, null, "1", null, complaintCategories), data.parentId);
                 uid += parentNode.nodes.length + 1;
                 insertedNode.id = uid;
                 insertedNode.parentNodeId = parentNode.id;
@@ -261,8 +301,8 @@ function setupEditEventsOnMillerCols() {
 
     $millerCol.on("add-item", ".miller-col-list-item", function (event, data) {
         debugger
-
-        let dialogFullbody = prepareDialogFullBody();
+        let isQA = data.categoryId == 2 /* for QA */;
+        let dialogFullbody = prepareDialogFullBody(isQA);
         var dialog = createDialog(dialogFullbody, "Create child for: " + data.itemName);
 
         $(dialog).on("click touch", ".popup-close", function () {
@@ -272,16 +312,23 @@ function setupEditEventsOnMillerCols() {
         });
 
         $(dialog).find(".button.create").on("click touch", function (event) {
+            let itemName, itemAnswer;
+            let itemValue = $(this).closest("#popup").find("input[name='itemValue']").val();
+            if (isQA) {
+                itemName = $(this).closest("#popup").find("input[name='itemQuestion']").val();
+                itemAnswer = $(this).closest("#popup").find("input[name='itemAnswer']").val();
+            }
+            else
+                itemName = $(this).closest("#popup").find("input[name='itemName']").val();
 
-            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
 
             // data is the parent item
             let childCategoryId = (Number(data.categoryId) + 1) + "";
 
             let uid = Number(data.itemId) + '-';
-            let insertedNode = new BaseCategoryNode("", itemName, Math.round(Math.random() * 100) + "" /* TODO add value input, also edit */, childCategoryId, data.itemId);
+            let insertedNode = new BaseCategoryNode("", itemName, itemAnswer ?? null, itemValue, childCategoryId, data.itemId);
 
-            let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.itemId);
+            let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, null, "1", null, complaintCategories), data.itemId);
             uid += parentNode.nodes.length + 1;
             insertedNode.id = uid;
             insertedNode.parentNodeId = parentNode.id;
@@ -383,7 +430,7 @@ function setupEditEventsOnMillerCols() {
 
         $(dialog).find(".button.delete").on("click touch", function () {
             debugger
-            findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.itemId, true);
+            findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, null, "1", null, complaintCategories), data.itemId, true);
             prepareDataForMillerCols();
             $("#popup").remove();
 
@@ -404,36 +451,11 @@ function setupEditEventsOnMillerCols() {
 
     $millerCol.on("edit-item", ".miller-col-list-item", function (event, data) {
 
-        var $dialogFullbody = $("<div/>");
-        var $dialogBody = $("<div/>").addClass("middle-body");
-
-        $dialogBody.append($("<i/>").attr("id", "element-icon").attr("name", "iconName").addClass("material-icons").addClass("dropbtn").text(typeof data.itemIcon == 'undefined' || data.itemIcon == "" ? "clear" : data.itemIcon).attr("onclick", "toggleDropdown()"));
-
-        var $dialogDropdown = $("<div/>").attr("id", "myDropdown").addClass("dropdown-content");
-
-        for (var k = 0; k < iconList.length; k++) {
-            $dialogDropdown.append($("<div/>").addClass("dropdown-element").append($("<i/>").addClass("material-icons").text(iconList[k])));
-        }
-
-        $dialogBody.append($dialogDropdown);
-
-        $dialogBody.append($("<input/>").attr("name", "itemName").attr("value", data.itemName));
-        $dialogBody.append($("<div/>").addClass("clearfix"));
-
-        var $dialogFooter = $("<div/>").addClass("footer");
-        var $buttonCreate = $("<button/>").attr("type", "button").addClass("positive button").append($("<i/>").addClass("material-icons").addClass("edit").text("save"));
-
-        $dialogFooter.append($buttonCreate).append($("<div/>").addClass("clearfix"));
-
-        $dialogFullbody.append($dialogBody);
-        $dialogFullbody.append($dialogFooter);
-
-        var dialog = createDialog($dialogFullbody, "Edit Item");
+        let dialogFullbody = prepareDialogFullBody(data.categoryId == 3 /* for QA */);
+        let dialog = createDialog(dialogFullbody, "Edit Item for: " + data.itemName);
 
         $(dialog).on("click touch", ".popup-close", function () {
-
             $("#popup").remove();
-
         });
 
         $(dialog).find(".button.positive").on("click touch", function () {
@@ -442,7 +464,7 @@ function setupEditEventsOnMillerCols() {
             let iconName = $(this).closest("#popup").find("i[name='iconName']").html();
             if (iconName == "clear") iconName = "";
 
-            let categoryItem = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, "1", null, complaintCategories), data.itemId)
+            let categoryItem = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, null, "1", null, complaintCategories), data.itemId)
 
             categoryItem.text = itemName;
             prepareDataForMillerCols();
@@ -504,4 +526,19 @@ function setupEditEventsOnMillerCols() {
         }
         return null;
     }
+}
+
+function getMillerColItemById(rootCategory, queryItemId) {
+    if (rootCategory?.items.length && queryItemId) {
+        let result;
+        for (let item of rootCategory.items) {
+            if (item.itemId == queryItemId)
+                result = item;
+            else
+                result = getMillerColItemById(item.childCategory, queryItemId);
+            if (result)
+                return result;
+        }
+    }
+    return null;
 }
