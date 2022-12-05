@@ -468,8 +468,8 @@ function guid() {
             if (item.hasChildren)
                 millerColListItem.append($("<i/>").addClass("material-icons").text("navigate_next").addClass("has-children"));
 
-            if (item.categoryId === "3")
-                millerColListItem.append($("<i/>").addClass("material-icons").text("grade").addClass("favourable-item"));
+            // if (item.categoryId === "3")
+            //     millerColListItem.append($("<i/>").addClass("material-icons").text("grade").addClass("favourable-item"));
 
             if (false == readOnly) {
                 var listItemActions = $("<span/>").addClass("list-item-actions").append($("<i/>").addClass("material-icons").addClass("edit").text("edit"));
