@@ -242,8 +242,7 @@ function setupEditEventsOnMillerCols() {
 
     $millerCol.on("col-add-item", ".miller-col-container", function (event, data) {
         debugger
-        let isQA = data.categoryId == 2 /* for QA */;
-        let dialogFullbody = prepareDialogFullBody(isQA);
+        let dialogFullbody = prepareDialogFullBody();
         var dialog = createDialog(dialogFullbody, "Create child for: " + data.itemName);
 
         $(dialog).on("click touch", ".popup-close", function () {
@@ -253,35 +252,14 @@ function setupEditEventsOnMillerCols() {
         });
 
         $(dialog).find(".button.create").on("click touch", function (event) {
-
-
+            debugger
             let itemValue = $(this).closest("#popup").find("input[name='itemValue']").val();
-            let itemName, itemAnswer;
+            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
 
-            if (isQA) {
-                itemName = $(this).closest("#popup").find("input[name='itemQuestion']").val();
-                itemAnswer = $(this).closest("#popup").find("input[name='itemAnswer']").val();
-            }
-            else
-                itemName = $(this).closest("#popup").find("input[name='itemName']").val();
-
-            let parentCategoryId = (parseInt(data.categoryId) - 1) + "";
-
-            let uid = Number(data.itemId) + '-';
-            let insertedNode = new BaseCategoryNode("", itemName, itemAnswer ?? null, itemValue, data.categoryId, data.itemId);
-            if (parentCategoryId == "0") {//top parent node
-                uid += complaintCategories.length + 1;
-                insertedNode.id = uid;
-                complaintCategories.push(insertedNode);
-            }
-            else {
-                let parentNode = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, null, "1", null, complaintCategories), data.parentId);
-                uid += parentNode.nodes.length + 1;
-                insertedNode.id = uid;
-                insertedNode.parentNodeId = parentNode.id;
-                parentNode.nodes.push(insertedNode);
-            }
-
+            let insertedNode = new BaseCategoryNode("", itemName, null, itemValue, data.categoryId, null);
+            insertedNode.id = (complaintCategories.length + 1) + "";
+            insertedNode.parentNodeId = null;
+            complaintCategories.push(insertedNode);
 
             prepareDataForMillerCols();
 
