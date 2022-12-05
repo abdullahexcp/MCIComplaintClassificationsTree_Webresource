@@ -156,16 +156,18 @@ function prepareDataForMillerCols(searchResult = null) {
 }
 
 function RestoreSelectedItems() {
+
     if (selectedItems?.size) {
         selectedItems = new Map([...selectedItems].sort());
         for (let [key, value] of selectedItems) {
             let item = getMillerColItemById(rootMillerColumnCategory, value);
             if (item) {
-                $(`.miller-col-container[data-category-id="${key}"]`).trigger('item-selected', item);
+                $(`.miller-col-list-item[data-category-id="${key}"][data-item-id="${value}"]`).click();
             }
         }
     }
 }
+
 
 function FilterOnSearch(query) {
     if (!query?.length)
