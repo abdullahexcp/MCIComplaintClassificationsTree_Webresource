@@ -447,11 +447,11 @@ function guid() {
                 millerColListItem.addClass("search-item-result");
 
 
-            var $listItemIcon = $("<i/>").addClass("material-icons list-item-icon");
-            millerColListItem.append($listItemIcon);
+            // var $listItemIcon = $("<i/>").addClass("material-icons list-item-icon");
+            // millerColListItem.append($listItemIcon);
 
-            if (item.itemIcon != "" && item.itemIcon != null)
-                $listItemIcon.text(item.itemIcon);
+            // if (item.itemIcon != "" && item.itemIcon != null)
+            //     $listItemIcon.text(item.itemIcon);
 
             let itemText = item.itemName;
 

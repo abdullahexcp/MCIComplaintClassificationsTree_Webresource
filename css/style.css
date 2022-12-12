@@ -154,7 +154,7 @@ input:focus {
 .item-question {
     display: block;
     font-weight: bold;
-    line-height: 2em;
+    line-height: 2.5em;
     background: #eeee;
 }
 /* .miller-col-list-item .list-item-actions {
