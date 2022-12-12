@@ -461,9 +461,9 @@ function guid() {
                     itemText.substr(item.searchResult.startIndex, item.searchResult.length) +
                     "</span>" +
                     itemText.substr(item.searchResult.startIndex + item.searchResult.length);
-            millerColListItem.append($("<span/>").html(itemText).addClass("list-item-text"));
+            millerColListItem.append($("<span/>").html(itemText).addClass(`list-item-text ${item?.itemAnswer ? "item-question" : ""}`));
             if (item?.itemAnswer)
-                millerColListItem.append($("<span/>").html(item.itemAnswer).addClass("list-item-text"));
+                millerColListItem.append($("<span/>").html(item.itemAnswer).addClass("list-item-text item-answer"));
 
             if (item.hasChildren)
                 millerColListItem.append($("<i/>").addClass("material-icons").text("navigate_next").addClass("has-children"));

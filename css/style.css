@@ -101,9 +101,7 @@ input#search_classifications {
 }
 
 .popup-wrapper .footer {
-
-    padding: 10px 0px;
-
+    padding: 10px 11px;
 }
 
 .clearfix {
@@ -150,3 +148,21 @@ input:focus {
     position: relative;
     transform: translateX(25%);
 }
+.list-item-text{
+    display: inline-block;
+}
+.item-question {
+    display: block;
+    font-weight: bold;
+    line-height: 2em;
+    background: #eeee;
+}
+/* .miller-col-list-item .list-item-actions {
+    position: relative;
+    float: right;
+    display: none;
+}
+.miller-col-list-item .has-children {
+    position: relative;
+    float: right;
+} */

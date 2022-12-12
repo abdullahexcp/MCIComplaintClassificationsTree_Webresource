@@ -1,22 +1,66 @@
 [{
         "id": "1",
-        "text": "موبايل",
-        "nodes": [{
-                "id": "1",
-                "text": "ساعات"
-            },
-            {
-                "id": "2",
-                "text": "افراد"
-            },
-            {
-                "id": "3",
-                "text": "اعمال"
-            }
-        ]
+        "text": "موبايل"
+
     },
     {
         "id": "2",
-        "text": "ويب/CRM"
+        "text": "ويب/CRM",
+        "nodes": [{
+                "id": "1",
+                "text": "Finance",
+                "nodes": [{
+                        "id": "1",
+                        "text": "Project Invoice & Salaries",
+                        "nodes": [{
+                            "id": "1",
+                            "text": "الفواتير من نوع Performa Invoice  لم تنشأ مهام للعمل عليها",
+                            "answer": "a.\\tيتم التأكد من ان الورك فلو بـ اسم Business Sector Time Sheet  حالتها Success \\nb.\\tاذا كانت waitingيتم عمل resume  \\nc.\\tاذا  كانت Failed  يتم عمل Runللورك فلو مرة اخرى \\n"
+                        }]
+                    },
+                    {
+                        "id": "2",
+                        "text": "Project Time Sheet",
+                        "nodes": [{
+                            "id": "1",
+                            "text": "لم يتم انشاء مهام على Time Sheet",
+                            "answer": "a.\tيتم التأكد من ان الورك فلو بـ اسم Business Sector Time Sheet  حالتها Success \nb.\tاذا كانت waitingيتم عمل resume  \nc.\tاذا  كانت Failed  يتم عمل Runللورك فلو مرة اخرى \n"
+                        }]
+                    }
+                ]
+            },
+            {
+                "id": "2",
+                "text": "Setting",
+                "nodes": [{
+                        "id": "1",
+                        "text": "SMS Text",
+                        "nodes": [{
+                            "id": "1",
+                            "text": "SMS Before Day Of Appointment",
+                            "answer": "\"b.\\tيتعمل عمل فلتر ب اسم الورك فلو \\nc.\\tاختيار حاله Waiting\\nd.\\tSelect the record\\ne.\\tاختيار action : resume\\n\""
+                        }]
+                    },
+                    {
+                        "id": "2",
+                        "text": "EXC Setting",
+                        "nodes": [{
+                            "id": "1",
+                            "text": "Contact Details Package Properties",
+                            "answer": "a.\tالتعديل على الحقول في صفحة اختيار الباقة في الموقع الالكتروني "
+                        }]
+                    },
+                    {
+                        "id": "3",
+                        "text": "Job system",
+                        "nodes": [{
+                            "id": "1",
+                            "text": "عمل رن لورك فلو ارسال رسائل تذكير العملاء لاكتر من زيارة",
+                            "answer": "b.\tيتعمل عمل فلتر ب اسم الورك فلو \nc.\tاختيار حاله Waiting\nd.\tSelect the record\ne.\tاختيار action : resume\n"
+                        }]
+                    }
+                ]
+            }
+        ]
     }
 ]

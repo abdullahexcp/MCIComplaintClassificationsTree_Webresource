@@ -64,7 +64,8 @@ function onLoad() {
 
     CATEGORIES.set('1', 'Screen Type');
     CATEGORIES.set('2', 'Sector Type');
-    CATEGORIES.set('3', 'Questionnaire');
+    CATEGORIES.set('3', 'Entity Type');
+    CATEGORIES.set('4', 'Questionnaire');
 
     prepareDataForMillerCols();
     setupEditEventsOnMillerCols();
@@ -197,20 +198,11 @@ function filterItemAndNodes(item, query) {
 }
 var iconList = [];
 
-function prepareDialogFullBody(isQA = false) {
+function prepareDialogFullBody(isQA = false, createOrEdit = true) {
 
     let dialogFullbody = $("<div/>");
     let dialogBody = $("<div/>").addClass("middle-body");
 
-    dialogBody.append($("<i/>").attr("id", "element-icon").attr("name", "iconName").addClass("material-icons").addClass("dropbtn").text("clear").attr("onclick", "toggleDropdown()"));
-
-    let dialogDropdown = $("<div/>").attr("id", "myDropdown").addClass("dropdown-content");
-
-    for (var k = 0; k < iconList.length; k++) {
-        $dialogDropdown.append($("<div/>").addClass("dropdown-element").append($("<i/>").addClass("material-icons").text(iconList[k])));
-    }
-
-    dialogBody.append(dialogDropdown);
     dialogBody.append($("<input/>").attr("name", "itemValue").attr("placeholder", "enter item value"));
     if (!isQA) {
         dialogBody.append($("<input/>").attr("name", "itemName").attr("placeholder", "enter item name"));
@@ -221,7 +213,7 @@ function prepareDialogFullBody(isQA = false) {
     dialogBody.append($("<div/>").addClass("clearfix"));
 
     let dialogFooter = $("<div/>").addClass("footer");
-    let buttonCreate = $("<button/>").attr("type", "button").addClass("button create").append($("<i/>").addClass("material-icons").addClass("add").text("add"));
+    let buttonCreate = $("<button/>").attr("type", "button").addClass(`button ${createOrEdit ? "create" : "positive"}`).append($("<i/>").addClass("material-icons").addClass("add").text(createOrEdit ? "add" : "done"));
 
     dialogFooter.append(buttonCreate).append($("<div/>").addClass("clearfix"));
 
@@ -281,7 +273,7 @@ function setupEditEventsOnMillerCols() {
 
     $millerCol.on("add-item", ".miller-col-list-item", function (event, data) {
         debugger
-        let isQA = data.categoryId == 2 /* for QA */;
+        let isQA = data.categoryId == 3 /* for QA */;
         let dialogFullbody = prepareDialogFullBody(isQA);
         var dialog = createDialog(dialogFullbody, "Create child for: " + data.itemName);
 
@@ -431,8 +423,10 @@ function setupEditEventsOnMillerCols() {
 
     $millerCol.on("edit-item", ".miller-col-list-item", function (event, data) {
 
-        let dialogFullbody = prepareDialogFullBody(data.categoryId == 2 /* for QA */);
-        let dialog = createDialog(dialogFullbody, "Edit Item for: " + data.itemName);
+        let isQA = data.categoryId == 4 /* for QA */;
+        let dialogFullbody = prepareDialogFullBody(isQA, false);
+        let dialog = createDialog(dialogFullbody, "Edit Item");
+
 
         $(dialog).on("click touch", ".popup-close", function () {
             $("#popup").remove();
@@ -440,13 +434,21 @@ function setupEditEventsOnMillerCols() {
 
         $(dialog).find(".button.positive").on("click touch", function () {
 
-            let itemName = $(this).closest("#popup").find("input[name='itemName']").val();
-            let iconName = $(this).closest("#popup").find("i[name='iconName']").html();
-            if (iconName == "clear") iconName = "";
+            let itemName, itemAnswer;
+            if (isQA) {
+                itemName = $(this).closest("#popup").find("input[name='itemQuestion']").val();
+                itemAnswer = $(this).closest("#popup").find("input[name='itemAnswer']").val();
+            }
+            else
+                itemName = $(this).closest("#popup").find("input[name='itemName']").val();
+
 
             let categoryItem = findDeleteNodeByNodeIdCatId(new BaseCategoryNode(null, null, null, null, "1", null, complaintCategories), data.itemId)
 
             categoryItem.text = itemName;
+            if (isQA)
+                categoryItem.answer = itemAnswer;
+
             prepareDataForMillerCols();
 
             $("#popup").remove();
@@ -462,6 +464,13 @@ function setupEditEventsOnMillerCols() {
         });
 
         dialog.open();
+        // set data after show dialog
+        if (isQA) {
+            $(this).closest("#popup").find("input[name='itemQuestion']").val(data.itemName);
+            $(this).closest("#popup").find("input[name='itemAnswer']").val(data.itemAnswer);
+        }
+        else
+            $(this).closest("#popup").find("input[name='itemName']").val(data.itemName);
     });
 
     const createDialog = function (dialogBodyContent, dialogTitle) {
