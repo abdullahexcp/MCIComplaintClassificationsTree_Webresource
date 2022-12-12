@@ -62,9 +62,9 @@ let $millerCol;
 
 function onLoad() {
 
-    CATEGORIES.set('1', 'فئة الشكوي');
-    CATEGORIES.set('2', 'Main Classification');
-    CATEGORIES.set('3', 'Sub Classification');
+    CATEGORIES.set('1', 'Screen Type');
+    CATEGORIES.set('2', 'Sector Type');
+    CATEGORIES.set('3', 'Questionnaire');
 
     prepareDataForMillerCols();
     setupEditEventsOnMillerCols();
@@ -431,7 +431,7 @@ function setupEditEventsOnMillerCols() {
 
     $millerCol.on("edit-item", ".miller-col-list-item", function (event, data) {
 
-        let dialogFullbody = prepareDialogFullBody(data.categoryId == 3 /* for QA */);
+        let dialogFullbody = prepareDialogFullBody(data.categoryId == 2 /* for QA */);
         let dialog = createDialog(dialogFullbody, "Edit Item for: " + data.itemName);
 
         $(dialog).on("click touch", ".popup-close", function () {
